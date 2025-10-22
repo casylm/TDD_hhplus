@@ -1,5 +1,6 @@
 package io.hhplus.tdd.point.service;
 
+import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
@@ -18,4 +19,18 @@ public class PointService {
         return userPointRepository.selectById(id);
     }
 
+    // 2. 포인트 충전
+    public UserPoint chargePoint(long id, long amount) {
+        // 현재 포인트 조회
+        UserPoint userPoint = userPointRepository.selectById(id);
+        long newAmount = userPoint.point() + amount;
+
+        // 포인트 충전
+        UserPoint updatedPoint = userPointRepository.insertOrUpdate(id,newAmount);
+
+        // 충전 내역 저장
+        pointHistoryRepository.insert(id, amount, TransactionType.CHARGE, updatedPoint.updateMillis());
+
+        return updatedPoint;
+    }
 }

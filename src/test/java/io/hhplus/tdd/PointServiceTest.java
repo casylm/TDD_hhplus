@@ -42,4 +42,24 @@ public class PointServiceTest {
 
         assertThat(result.point()).isEqualTo(givenPoint);
     }
+
+    @Test
+    void 포인트를_충전한다() {
+        // given
+        long currentPoint = 2500L;
+        long chargePoint = 1000L;
+        long userId = 2L;
+        UserPoint userPoint = new UserPoint(userId,currentPoint,System.currentTimeMillis());
+        UserPoint updatedPoint = new UserPoint(userId, currentPoint + chargePoint, System.currentTimeMillis());
+
+        // when
+        when(userPointRepository.selectById(userId)).thenReturn(userPoint);
+        when(userPointRepository.insertOrUpdate(userId,currentPoint+chargePoint))
+                .thenReturn(updatedPoint);
+
+        // then
+        UserPoint result = pointService.chargePoint(userId, chargePoint);
+
+        assertThat(result.point()).isEqualTo(currentPoint+chargePoint);
+    }
 }
