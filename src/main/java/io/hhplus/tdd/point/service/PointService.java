@@ -33,4 +33,20 @@ public class PointService {
 
         return updatedPoint;
     }
+
+    // 3. 포인트 사용
+    public UserPoint usePoint(long id, long amount) {
+        // 현재 포인트 조회
+        UserPoint userPoint = userPointRepository.selectById(id);
+        long newAmount = userPoint.point() - amount;
+
+        // 포인트 사용
+        UserPoint updatedPoint = userPointRepository.insertOrUpdate(id,newAmount);
+
+        // 충전 내역 저장
+        pointHistoryRepository.insert(id, amount, TransactionType.USE, updatedPoint.updateMillis());
+
+        return updatedPoint;
+    }
+
 }

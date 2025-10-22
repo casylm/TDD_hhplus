@@ -62,4 +62,25 @@ public class PointServiceTest {
 
         assertThat(result.point()).isEqualTo(currentPoint+chargePoint);
     }
+
+    @Test
+    void 포인트를_사용한다() {
+        // given
+        long userId = 3L;
+        long currentAmount = 50000L;
+        long useAmount = 25000L;
+        UserPoint beforeUser = new UserPoint(userId,currentAmount,System.currentTimeMillis());
+        UserPoint AfterUser = new UserPoint(userId, currentAmount - useAmount, System.currentTimeMillis());
+
+        // when
+        when(userPointRepository.selectById(userId)).thenReturn(beforeUser);
+        when(userPointRepository.insertOrUpdate(userId,currentAmount-useAmount))
+                .thenReturn(AfterUser);
+
+        // then
+        UserPoint result = pointService.usePoint(userId, useAmount);
+
+        assertThat(result.point()).isEqualTo(currentAmount-useAmount);
+    }
+
 }
