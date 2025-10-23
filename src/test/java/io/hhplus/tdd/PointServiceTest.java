@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -124,6 +125,19 @@ public class PointServiceTest {
         // 충전 내역 저장이 호출되었는지 검증
         verify(pointHistoryRepository, times(1))
                 .insert(eq(userId), eq(chargeAmount), eq(TransactionType.CHARGE), anyLong());
+    }
+
+    // Step02
+    @Test
+    @DisplayName("포인트 유효성 검사")
+    void 사용자의_포인트가_0원_이하이면_예외발생() {
+        // given
+        long userId = 5L;
+
+        // when & then
+        assertThatThrownBy(() -> new UserPoint(5L,-500,System.currentTimeMillis()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("포인트 금액은 0보다 커야 합니다.");
     }
 
 
