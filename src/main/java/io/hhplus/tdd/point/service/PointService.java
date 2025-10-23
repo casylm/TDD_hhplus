@@ -28,6 +28,12 @@ public class PointService {
         UserPoint userPoint = userPointRepository.selectById(id);
         long newAmount = userPoint.point() + amount;
 
+        final long MAX_POINT = 1_000_000L; // 최대 100만 포인트
+
+        if (newAmount > MAX_POINT) {
+            throw new IllegalArgumentException("최대 포인트 한도(" + MAX_POINT + ")를 초과할 수 없습니다.");
+        }
+
         // 포인트 충전
         UserPoint updatedPoint = userPointRepository.insertOrUpdate(id,newAmount);
 

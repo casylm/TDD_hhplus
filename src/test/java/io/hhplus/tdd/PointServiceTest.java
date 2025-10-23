@@ -140,5 +140,21 @@ public class PointServiceTest {
                 .hasMessageContaining("포인트 금액은 0보다 커야 합니다.");
     }
 
+    @Test
+    @DisplayName("포인트 충전 초과 검증")
+    void 포인트_충전_초과_검증() {
+        // given
+        long userId = 6L;
+        long currentPoint = 9_000_000L;
+        UserPoint userPoint = new UserPoint(userId,currentPoint,System.currentTimeMillis());
+
+        // when
+        when(userPointRepository.selectById(userId)).thenReturn(userPoint);
+
+        // then
+        assertThatThrownBy(() -> pointService.chargePoint(userId,2_000_000L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("최대 포인트 한도(1000000)를 초과할 수 없습니다.");
+    }
 
 }
