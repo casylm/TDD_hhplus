@@ -185,4 +185,42 @@ public class PointServiceIntegrationTest {
         assertThat(useCount).isEqualTo(10);
     }
 
+    @Test
+    @DisplayName("서로 다른 유저에 대한 동시 요청 - 독립적으로 처리되어야 함")
+    public void 다른_유저_동시_요청_테스트() throws InterruptedException {
+        // given
+        int userCount = 5;
+        int requestPerUser = 10;
+        ExecutorService executorService = Executors.newFixedThreadPool(userCount * requestPerUser);
+        CountDownLatch latch = new CountDownLatch(userCount * requestPerUser);
+
+        // when - 5명의 유저가 각각 10번씩 100포인트 충전
+        for (int userId = 300; userId < 300 + userCount; userId++) {
+            final long finalUserId = userId;
+            for (int j = 0; j < requestPerUser; j++) {
+                executorService.submit(() -> {
+                    try {
+                        pointService.chargePoint(finalUserId, 100L);
+                    } catch (Exception e) {
+                        // 예외 무시
+                    } finally {
+                        latch.countDown();
+                    }
+                });
+            }
+        }
+
+        latch.await();
+        executorService.shutdown();
+
+        // then - 각 유저의 포인트가 정확히 1000 (100 * 10)이어야 함
+        for (int userId = 300; userId < 300 + userCount; userId++) {
+            UserPoint userPoint = pointService.getUserPoint(userId);
+            assertThat(userPoint.point()).isEqualTo(1000L);
+
+            List<PointHistory> histories = pointService.getPointHistories(userId);
+            assertThat(histories).hasSize(requestPerUser);
+        }
+    }
+
 }
