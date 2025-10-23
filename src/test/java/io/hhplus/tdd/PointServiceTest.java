@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -126,5 +127,50 @@ public class PointServiceTest {
                 .insert(eq(userId), eq(chargeAmount), eq(TransactionType.CHARGE), anyLong());
     }
 
+    // Step02
+    @Test
+    @DisplayName("포인트 유효성 검사")
+    void 사용자의_포인트가_0원_이하이면_예외발생() {
+        // given
+        long userId = 5L;
 
+        // when & then
+        assertThatThrownBy(() -> new UserPoint(5L,-500,System.currentTimeMillis()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("포인트 금액은 0 이상 입니다.");
+    }
+
+    @Test
+    @DisplayName("포인트 충전 초과 검증")
+    void 포인트_충전_초과_검증() {
+        // given
+        long userId = 6L;
+        long currentPoint = 9_000_000L;
+        UserPoint userPoint = new UserPoint(userId,currentPoint,System.currentTimeMillis());
+
+        // when
+        when(userPointRepository.selectById(userId)).thenReturn(userPoint);
+
+        // then
+        assertThatThrownBy(() -> pointService.chargePoint(userId,2_000_000L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("최대 포인트 한도(1000000)를 초과할 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("포인트 사용 불가 검증")
+    void 포인트_사용_불가_검증() {
+        // given
+        long userId = 7L;
+        long currentPoint = 9_000_00L;
+        UserPoint userPoint = new UserPoint(userId,currentPoint,System.currentTimeMillis());
+
+        // when
+        when(userPointRepository.selectById(userId)).thenReturn(userPoint);
+
+        // then
+        assertThatThrownBy(() -> pointService.usePoint(userId,1_000_000L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("포인트가 부족하여 차감할 수 없습니다.");
+    }
 }

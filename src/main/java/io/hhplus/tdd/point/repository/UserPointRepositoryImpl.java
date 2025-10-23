@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class UserPointRepositoryImpl implements UserPointRepository {
 
-    private UserPointTable userPointTable;
+    private final UserPointTable userPointTable;
 
     @Override
     public UserPoint selectById(Long id) {
