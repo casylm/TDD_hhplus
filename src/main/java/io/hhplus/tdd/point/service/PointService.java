@@ -20,6 +20,12 @@ public class PointService {
     // 1. 포인트 조회
     public UserPoint getUserPoint(long id) {
         return userPointRepository.selectById(id);
+        UserPoint userPoint = userPointRepository.selectById(id);
+
+        if (userPoint == null) {
+            return UserPoint.empty(id);
+        }
+        return userPoint;
     }
 
     // 2. 포인트 충전

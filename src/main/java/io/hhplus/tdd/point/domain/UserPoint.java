@@ -14,8 +14,8 @@ public record UserPoint(
      * 금액 유효성 검증
      */
     public UserPoint {
-        if (point <= 0) {
-            throw new IllegalArgumentException("포인트 금액은 0보다 커야 합니다.");
+        if (point < 0) {
+            throw new IllegalArgumentException("포인트 금액은 0 이상 입니다.");
         }
     }
 }

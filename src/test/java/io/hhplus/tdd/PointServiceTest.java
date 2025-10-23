@@ -137,7 +137,7 @@ public class PointServiceTest {
         // when & then
         assertThatThrownBy(() -> new UserPoint(5L,-500,System.currentTimeMillis()))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("포인트 금액은 0보다 커야 합니다.");
+                .hasMessageContaining("포인트 금액은 0 이상 입니다.");
     }
 
     @Test
