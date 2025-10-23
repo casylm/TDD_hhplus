@@ -1,11 +1,14 @@
 package io.hhplus.tdd.point.service;
 
+import io.hhplus.tdd.point.domain.PointHistory;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -47,6 +50,11 @@ public class PointService {
         pointHistoryRepository.insert(id, amount, TransactionType.USE, updatedPoint.updateMillis());
 
         return updatedPoint;
+    }
+
+    // 4. 포인트 내역 조회
+    public List<PointHistory> getPointHistories(long id) {
+        return pointHistoryRepository.selectAllByUserId(id);
     }
 
 }
