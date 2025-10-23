@@ -157,4 +157,20 @@ public class PointServiceTest {
                 .hasMessageContaining("최대 포인트 한도(1000000)를 초과할 수 없습니다.");
     }
 
+    @Test
+    @DisplayName("포인트 사용 불가 검증")
+    void 포인트_사용_불가_검증() {
+        // given
+        long userId = 7L;
+        long currentPoint = 9_000_00L;
+        UserPoint userPoint = new UserPoint(userId,currentPoint,System.currentTimeMillis());
+
+        // when
+        when(userPointRepository.selectById(userId)).thenReturn(userPoint);
+
+        // then
+        assertThatThrownBy(() -> pointService.usePoint(userId,1_000_000L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("포인트가 부족하여 차감할 수 없습니다.");
+    }
 }

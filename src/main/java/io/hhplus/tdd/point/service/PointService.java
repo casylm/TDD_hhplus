@@ -52,6 +52,10 @@ public class PointService {
         // 포인트 사용
         UserPoint updatedPoint = userPointRepository.insertOrUpdate(id,newAmount);
 
+        if (newAmount < 0) {
+            throw new IllegalArgumentException("포인트가 부족하여 차감할 수 없습니다.");
+        }
+
         // 충전 내역 저장
         pointHistoryRepository.insert(id, amount, TransactionType.USE, updatedPoint.updateMillis());
 
