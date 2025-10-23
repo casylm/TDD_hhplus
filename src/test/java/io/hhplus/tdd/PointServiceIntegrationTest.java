@@ -85,4 +85,52 @@ public class PointServiceIntegrationTest {
         assertThat(history3.amount()).isEqualTo(useAmount);
         assertThat(history3.type()).isEqualTo(TransactionType.USE);
     }
+
+    @Test
+    @DisplayName("동일 유저에 대한 동시 충전 요청 - 순차 처리되어야 함")
+    public void 동일_유저_동시_충전_테스트() throws InterruptedException {
+        // given
+        long userId = 100L;
+        int threadCount = 10;
+        long chargeAmountPerThread = 100L;
+
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failCount = new AtomicInteger(0);
+
+        // when - 10개 스레드가 동시에 100포인트씩 충전
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    pointService.chargePoint(userId, chargeAmountPerThread);
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    failCount.incrementAndGet();
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        // 메인 스레드는 모든 스레드가 종료될 때까지 대기
+        latch.await();
+        executorService.shutdown();
+
+        // then
+        UserPoint finalPoint = pointService.getUserPoint(userId);
+        List<PointHistory> histories = pointService.getPointHistories(userId);
+
+        // 모든 요청이 성공해야 함
+        assertThat(successCount.get()).isEqualTo(threadCount);
+        assertThat(failCount.get()).isEqualTo(0);
+
+        // 최종 포인트는 1000 (100 * 10)
+        assertThat(finalPoint.point()).isEqualTo(1000L);
+
+        // 히스토리는 10개
+        assertThat(histories).hasSize(threadCount);
+        assertThat(histories).allMatch(h -> h.type() == TransactionType.CHARGE);
+    }
+
 }
