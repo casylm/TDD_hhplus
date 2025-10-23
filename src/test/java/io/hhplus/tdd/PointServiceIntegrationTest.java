@@ -133,4 +133,56 @@ public class PointServiceIntegrationTest {
         assertThat(histories).allMatch(h -> h.type() == TransactionType.CHARGE);
     }
 
+    @Test
+    @DisplayName("동일 유저에 대한 동시 충전/사용 요청 - 순차 처리되어야 함")
+    public void 동일_유저_동시_충전_사용_테스트() throws InterruptedException {
+        // given
+        long userId = 200L;
+        int threadCount = 20;
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        AtomicInteger successCount = new AtomicInteger(0);
+
+        // 초기 포인트 충전 (10000 포인트)
+        pointService.chargePoint(userId, 10000L);
+
+        // when - 10개 스레드는 충전(100), 10개 스레드는 사용(50)
+        for (int i = 0; i < threadCount; i++) {
+            final int index = i;
+            executorService.submit(() -> {
+                try {
+                    if (index % 2 == 0) {
+                        pointService.chargePoint(userId, 100L);
+                    } else {
+                        pointService.usePoint(userId, 50L);
+                    }
+                    successCount.incrementAndGet();
+                } catch (Exception e) {
+                    // 일부 사용 요청은 실패할 수 있음
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await();
+        executorService.shutdown();
+
+        // then
+        UserPoint finalPoint = pointService.getUserPoint(userId);
+        List<PointHistory> histories = pointService.getPointHistories(userId);
+
+        // 최종 포인트 계산: 초기 10000 + (충전 100 * 10) - (사용 50 * 10) = 10500
+        assertThat(finalPoint.point()).isEqualTo(10500L);
+
+        // 히스토리는 초기 충전 1개 + 동시 요청 20개 = 21개
+        assertThat(histories).hasSize(21);
+
+        long chargeCount = histories.stream().filter(h -> h.type() == TransactionType.CHARGE).count();
+        long useCount = histories.stream().filter(h -> h.type() == TransactionType.USE).count();
+
+        assertThat(chargeCount).isEqualTo(11); // 초기 1 + 동시 충전 10
+        assertThat(useCount).isEqualTo(10);
+    }
+
 }
